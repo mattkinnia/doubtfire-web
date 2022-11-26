@@ -314,7 +314,7 @@
                         <i class="fa fa-trash-o"></i>
                       </button>
                       <label class="col-sm-3 control-label">Requirement Type</label>
-                      <div class="col-sm-7 form-group">
+                      <div class="col-sm-8 form-group">
                         <div class="btn-group pull-left">
                           <label
                             name="upreq-type-{{upreq.key}}"
@@ -330,7 +330,7 @@
                             btn-radio="'document'"
                             ng-model="upreq.type"
                           >
-                            <i class="fa fa-file-pdf-o"></i> Document
+                            <i class="fa fa-file-pdf-o"></i> PDF
                           </label>
                           <label
                             name="upreq-type-{{upreq.key}}"
@@ -339,6 +339,14 @@
                             ng-model="upreq.type"
                           >
                             <i class="fa fa-file-image-o"></i> Image
+                          </label>
+                          <label
+                            name="upreq-type-{{upreq.key}}"
+                            class="btn btn-default"
+                            btn-radio="'word'"
+                            ng-model="upreq.type"
+                          >
+                            <i class="fa fa-file-word-o"></i> Word
                           </label>
                         </div>
                       </div>
