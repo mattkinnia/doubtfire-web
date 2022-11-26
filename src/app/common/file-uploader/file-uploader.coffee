@@ -60,6 +60,10 @@ angular.module('doubtfire.common.file-uploader', [])
         extensions: ['pdf', 'ps']
         icon:       'fa-file-pdf-o'
         name:       'PDF'
+      word:
+        extensions: ['docx']
+        icon:       'fa-file-word-o'
+        name:       'word'
       csv:
         extensions: ['csv','xls','xlsx']
         icon:       'fa-file-excel-o'
