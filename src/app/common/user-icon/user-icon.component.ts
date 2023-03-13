@@ -1,6 +1,5 @@
-import { Component, Input, OnInit, Inject, ViewChild, AfterViewInit } from '@angular/core';
-import { User } from 'src/app/api/models/doubtfire-model';
-import { currentUser } from 'src/app/ajs-upgraded-providers';
+import { Component, Input, ViewChild, AfterViewInit, OnChanges, SimpleChanges } from '@angular/core';
+import { User, UserService } from 'src/app/api/models/doubtfire-model';
 import { Md5 } from 'ts-md5/dist/md5';
 
 declare var d3: any;
@@ -10,15 +9,31 @@ declare var d3: any;
   templateUrl: './user-icon.component.html',
   styleUrls: ['./user-icon.component.scss'],
 })
-export class UserIconComponent implements AfterViewInit {
-  @Input() user: User = this.currentUserRef.profile;
-  @Input() size: number = 100;
+export class UserIconComponent implements AfterViewInit, OnChanges {
+  @Input() user: User;
+  @Input() unselected: boolean;
+  @Input() size = 100;
 
-  @ViewChild('svg') svg;
+  @ViewChild('svg') svg: { nativeElement: any };
 
   lineHeight = 12;
+  usingCurrentUser: boolean;
 
-  constructor(@Inject(currentUser) private currentUserRef: any) {}
+  ngAfterViewInit(): void {
+    if (this.user == null) {
+      this.usingCurrentUser = true;
+      this.user = this.userService.currentUser;
+    }
+    this.drawUserIcon();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.user || changes.unselected) {
+      this.drawUserIcon();
+    }
+  }
+
+  constructor(private userService: UserService) {}
 
   get backgroundUrl(): string {
     const hash = this.email != null ? Md5.hashStr(this.email.trim().toLowerCase()) : Md5.hashStr('');
@@ -84,9 +99,9 @@ export class UserIconComponent implements AfterViewInit {
       '#5C6BC0',
     ];
 
-    var sum = 0;
-    for (var i = 0; i < username.length; i++) {
-      sum += username.charCodeAt(i);
+    let sum = 0;
+    for (let i = 0; i < username?.length; i++) {
+      sum += username?.charCodeAt(i);
     }
     return colors[sum % colors.length];
   }
@@ -100,7 +115,22 @@ export class UserIconComponent implements AfterViewInit {
     return context.measureText(text).width;
   }
 
-  ngAfterViewInit(): void {
+  drawUserIcon(): void {
+    // TODO: Consider caching SVG on a per-user basis
+    // clear svg
+    d3.select(this.svg?.nativeElement).selectAll('*').remove();
+    // if this.unselected is undefined or true
+    if (!this.unselected == null || this.unselected) {
+      if (this.svg?.nativeElement) {
+        // hide div from DOM (but don't remove it)
+        this.svg.nativeElement.style.display = 'none';
+      }
+    } else {
+      if (this.svg?.nativeElement) {
+        // add div to DOM
+        this.svg.nativeElement.style.display = 'block';
+      }
+    }
     const lines = this.generateLines();
 
     let textRadius = 0;
@@ -111,7 +141,7 @@ export class UserIconComponent implements AfterViewInit {
     }
 
     const svg = d3
-      .select(this.svg.nativeElement)
+      .select(this.svg?.nativeElement)
       .style('font', '8px sans-serif')
       .attr('width', this.size)
       .attr('shape-rendering', 'geometricPrecision')
@@ -137,7 +167,7 @@ export class UserIconComponent implements AfterViewInit {
       .attr('cx', this.size / 2)
       .attr('cy', this.size / 2)
       .attr('r', this.radius)
-      .attr('fill', this.generateUniqueBackgroundColor(this.user.name));
+      .attr('fill', this.generateUniqueBackgroundColor(this.user?.name));
 
     svg
       .append('text')

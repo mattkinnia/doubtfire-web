@@ -11,12 +11,19 @@ import {
   ViewChild,
   TemplateRef,
 } from '@angular/core';
-import { taskDefinition, Unit, currentUser, groupService, alertService } from 'src/app/ajs-upgraded-providers';
+import { alertService } from 'src/app/ajs-upgraded-providers';
 import { TasksOfTaskDefinitionPipe } from 'src/app/common/filters/tasks-of-task-definition.pipe';
 import { TasksInTutorialsPipe } from 'src/app/common/filters/tasks-in-tutorials.pipe';
 import { TasksForInboxSearchPipe } from 'src/app/common/filters/tasks-for-inbox-search.pipe';
-import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { Unit } from 'src/app/api/models/unit';
+import { UnitRole } from 'src/app/api/models/unit-role';
+import { Tutorial, UserService, Task, Project, TaskDefinition } from 'src/app/api/models/doubtfire-model';
+import { Observable } from 'rxjs';
+import { FileDownloaderService } from 'src/app/common/file-downloader/file-downloader';
+import { AppInjector } from 'src/app/app-injector';
+import { DoubtfireConstants } from 'src/app/config/constants/doubtfire-constants';
+import { SelectedTaskService } from 'src/app/projects/states/dashboard/selected-task.service';
 
 @Component({
   selector: 'df-staff-task-list',
@@ -26,28 +33,47 @@ import { MatDialog } from '@angular/material/dialog';
 export class StaffTaskListComponent implements OnInit, OnChanges {
   @ViewChild('searchDialog') searchDialog: TemplateRef<any>;
 
-  @Input() task: any;
-  @Input() project: any;
+  @Input() task: Task;
+  @Input() project: Project;
 
-  @Input() taskData;
-  @Input() unit;
-  @Input() unitRole;
-  @Input() filters;
-  @Input() showSearchOptions = false;
+  @Input() taskData: {
+    source: (unit: Unit, taskDef: TaskDefinition | number) => Observable<Task[]>;
+    selectedTask: Task;
+    taskKey: string;
+    onSelectedTaskChange: (task: Task) => void;
+    taskDefMode: boolean;
+  };
+  @Input() unit: Unit;
+  @Input() unitRole: UnitRole;
+  @Input() filters: {
+    taskDefinition: TaskDefinition;
+    tutorials: Tutorial[];
+    forceStream: boolean;
+    studentName: string;
+    tutorialIdSelected: any;
+    taskDefinitionIdSelected: number | TaskDefinition;
+  };
+  @Input() showSearchOptions = true;
 
-  isNarrow: boolean;
+  @Input() isNarrow: boolean;
 
   userHasTutorials: boolean;
   filteredTasks: any[] = null;
-  studentFilter: any[] = null;
+
+  studentFilter: {
+    id: number | string;
+    inboxDescription: string;
+    abbreviation: string;
+    forceStream: boolean;
+    tutorial?: Tutorial;
+  }[] = null;
+
   tasks: any[] = null;
 
   watchingTaskKey: any;
 
   panelOpenState = false;
   loading = true;
-
-  isTaskDefMode: boolean;
 
   definedTasksPipe = new TasksOfTaskDefinitionPipe();
   tasksInTutorialsPipe = new TasksInTutorialsPipe();
@@ -65,6 +91,7 @@ export class StaffTaskListComponent implements OnInit, OnChanges {
   taskDefSort = 0;
   tutorialSort = 0;
   originalFilteredTasks: any[] = null;
+  allowHover = true;
 
   @HostListener('document:keydown', ['$event'])
   handleKeyDown(event: KeyboardEvent) {
@@ -83,32 +110,35 @@ export class StaffTaskListComponent implements OnInit, OnChanges {
   }
 
   constructor(
-    private breakpointObserver: BreakpointObserver,
-    @Inject(taskDefinition) private taskDef,
-    @Inject(Unit) private Unit,
-    @Inject(currentUser) private currentUser,
-    @Inject(groupService) private groupService,
+    private selectedTaskService: SelectedTaskService,
     @Inject(alertService) private alertService,
-    public dialog: MatDialog
-  ) {}
+    private fileDownloaderService: FileDownloaderService,
+    public dialog: MatDialog,
+    private userService: UserService
+  ) { }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (
-      (changes.unit.currentValue.id && changes.unit.previousValue.id !== changes.unit.currentValue.id) ||
-      this.tasks == null
+      ((!changes.unit?.isFirstChange &&
+      changes.unit.currentValue.id &&
+      changes.unit.previousValue.id !== changes.unit.currentValue.id) ||
+      this.tasks == null) &&
+      this.isTaskDefMode &&
+      this.filters
     ) {
       this.refreshData();
     }
   }
 
   ngOnInit(): void {
-    const layoutChanges = this.breakpointObserver.observe('(max-width: 1000px)');
+    // if device is movile always set hover to false
+    // so you can instantly click on an item in the list
+    if (navigator.maxTouchPoints > 1) {
+      this.allowHover = false;
+    }
 
-    layoutChanges.subscribe((state: BreakpointState) => {
-      this.isNarrow = state.matches;
-    });
     // Does the current user have any tutorials?
-    this.userHasTutorials = this.unit.tutorialsForUserName(this.currentUser.profile.name)?.length > 0;
+    this.userHasTutorials = this.unit.tutorialsForUserName(this.userService.currentUser.name)?.length > 0;
 
     this.filters = Object.assign(
       {
@@ -117,27 +147,23 @@ export class StaffTaskListComponent implements OnInit, OnChanges {
         tutorials: [],
         taskDefinitionIdSelected: null,
         taskDefinition: null,
-        forceStream: true
+        forceStream: true,
       },
       this.filters
     );
 
-    this.isTaskDefMode =
-      this.taskData?.source === this.Unit.tasksForDefinition &&
-      this.filters?.taskDefinitionIdSelected &&
-      this.showSearchOptions;
-
     this.studentFilter = [
       ...[
-        { id: 'all', inbox_description: 'All Students', abbreviation: '__all', forceStream: false },
-        { id: 'mine', inbox_description: 'My Students', abbreviation: '__mine', forceStream: !this.isTaskDefMode },
+        { id: 'all', inboxDescription: 'All Students', abbreviation: '__all', forceStream: false },
+        { id: 'mine', inboxDescription: 'My Students', abbreviation: '__mine', forceStream: !this.isTaskDefMode },
       ],
       ...this.unit.tutorials.map((t) => {
         return {
           id: t.id,
-          inbox_description: `${t.abbreviation} - ${t.description}`,
+          inboxDescription: `${t.abbreviation} - ${t.description}`,
           abbreviation: t.abbreviation,
-          forceStream: true
+          forceStream: true,
+          tutorial: t,
         };
       }),
     ];
@@ -148,20 +174,36 @@ export class StaffTaskListComponent implements OnInit, OnChanges {
 
     // Initially not watching the task key
     this.watchingTaskKey = false;
+
+    this.refreshData();
+  }
+
+  public get isTaskDefMode(): boolean {
+    return this.taskData.taskDefMode;
   }
 
   downloadSubmissionPdfs() {
-    this.taskDef.downloadSubmissionsPdfs(this.unit, this.filters.taskDefinition);
+    const taskDef = this.filters.taskDefinition;
+    this.fileDownloaderService.downloadFile(
+      `${AppInjector.get(DoubtfireConstants).API_URL}/submission/unit/${this.unit.id}/task_definitions/${taskDef.id
+      }/student_pdfs`,
+      `${this.unit.code}-${taskDef.abbreviation}-pdfs.zip`
+    );
   }
 
   downloadSubmissions() {
-    this.taskDef.downloadSubmissions(this.unit, this.filters.taskDefinition);
+    const taskDef = this.filters.taskDefinition;
+    this.fileDownloaderService.downloadFile(
+      `${AppInjector.get(DoubtfireConstants).API_URL}/submission/unit/${this.unit.id}/task_definitions/${taskDef.id
+      }/download_submissions`,
+      `${this.unit.code}-${taskDef.abbreviation}-submissions.zip`
+    );
   }
 
   openDialog() {
     const dialogRef = this.dialog.open(this.searchDialog);
 
-    dialogRef.afterClosed().subscribe((result) => {});
+    dialogRef.afterClosed().subscribe((result) => { });
   }
 
   refreshTasks(): void {
@@ -171,7 +213,11 @@ export class StaffTaskListComponent implements OnInit, OnChanges {
   applyFilters() {
     let filteredTasks = this.definedTasksPipe.transform(this.tasks, this.filters.taskDefinition);
     if (this.filters.tutorials) {
-      filteredTasks = this.tasksInTutorialsPipe.transform(filteredTasks, this.filters.tutorials, this.filters.forceStream);
+      filteredTasks = this.tasksInTutorialsPipe.transform(
+        filteredTasks,
+        this.filters.tutorials.map((t) => t.id),
+        this.filters.forceStream
+      );
     }
     filteredTasks = this.taskWithStudentNamePipe.transform(filteredTasks, this.filters.studentName);
     this.filteredTasks = filteredTasks;
@@ -204,32 +250,23 @@ export class StaffTaskListComponent implements OnInit, OnChanges {
     this.filters.forceStream = filterOption.forceStream;
 
     if (tutorialId === 'mine') {
-      this.filters.tutorials = this.unit.tutorialsForUserName(this.currentUser.profile.name);
+      this.filters.tutorials = this.unit.tutorialsForUserName(this.userService.currentUser.name);
     } else if (tutorialId === 'all') {
       // Ignore tutorials filter
       this.filters.tutorials = null;
     } else {
-      this.filters.tutorials = [filterOption];
+      this.filters.tutorials = [filterOption.tutorial];
     }
 
-    if (this.filters.tutorials) {
-      this.filters.tutorials = this.filters.tutorials.map((t) => t.id);
-    }
     this.applyFilters();
   }
 
   //  Task definition options
-  groupSetName(id: number) {
-    if (this.unit.hasGroupwork()) {
-      this.groupService.groupSetName(id, this.unit);
-    }
-  }
-
   taskDefinitionIdChanged() {
     let taskDef;
     const taskDefId = this.filters.taskDefinitionIdSelected;
     if (taskDefId) {
-      taskDef = this.unit.taskDef(taskDefId);
+      taskDef = taskDefId instanceof TaskDefinition ? taskDefId : this.unit.taskDef(taskDefId);
     } else {
       taskDef = null;
     }
@@ -246,55 +283,49 @@ export class StaffTaskListComponent implements OnInit, OnChanges {
       return;
     }
     const taskDef =
-      this.unit.task_definitions.find((x) => x.abbreviation === taskKey?.taskDefAbbr) || this.unit.task_definitions[0];
+      this.unit.taskDefinitionCache.currentValues.find((x) => x.abbreviation === taskKey?.taskDefAbbr) ||
+      this.unit.taskDefinitionCache.currentValues[0];
     this.filters.taskDefinitionIdSelected = taskDef.id;
     this.filters.taskDefinition = taskDef;
   }
 
   // Finds a task (or null) given its task key
-  private findTaskForTaskKey(key) {
-    this.tasks.find((t) => t?.hasTaskKey(key));
+  private findTaskForTaskKey(key): Task {
+    return this.tasks.find((t) => t?.hasTaskKey(key));
   }
 
   // Callback to refresh data from the task source
   private refreshData() {
     this.loading = true;
     // Tasks for feedback or tasks for task, depending on the data source
-    this.taskData.source.query(
-      { id: this.unit.id, task_def_id: this.filters?.taskDefinitionIdSelected },
-      (response) => {
-        this.tasks = this.unit.incorporateTasks(response, this.applyFilters.bind(this));
-        // If loading via task definitions, fill
-        if (this.isTaskDefMode) {
-          // Filter out any empty tasks
-          // TODO: need to investigate how these are getting here.
-          this.tasks = this.tasks.filter((n) => n);
-          const unstartedTasks = this.unit.fillWithUnStartedTasks(this.tasks, this.filters.taskDefinitionIdSelected);
-          Object.assign(this.tasks, unstartedTasks);
-        }
-        // Apply initial filters
+    this.taskData.source(this.unit, this.filters?.taskDefinitionIdSelected).subscribe({
+      next: (response) => {
+        this.tasks = response;
         this.applyFilters();
         this.loading = false;
+
         // Load initial set task, either the one provided (by the URL)
         // then load actual task in now or the first task that applies
         // to the given set of filters.
         const task = this.findTaskForTaskKey(this.taskData.taskKey);
         this.setSelectedTask(task);
+
         // For when URL has been manually changed, set the selected task
         // using new array of tasks loaded from the new taskKey
         if (!this.watchingTaskKey) {
           this.watchingTaskKey = true;
         }
       },
-      (error) => {
-        this.alertService.add('danger', error.data.error, 6000);
-      }
-    );
+      error: (message) => {
+        this.alertService.add('danger', message, 6000);
+      },
+    });
   }
 
-  setSelectedTask(task) {
+  setSelectedTask(task: Task) {
+    this.selectedTaskService.setSelectedTask(task);
     this.taskData.selectedTask = task;
-    if (typeof this.taskData.onSelectedTaskChange === 'function') {
+    if (this.taskData.onSelectedTaskChange) {
       this.taskData.onSelectedTaskChange(task);
     }
     if (task) {
@@ -310,17 +341,17 @@ export class StaffTaskListComponent implements OnInit, OnChanges {
     const funcName = taskEl.scrollIntoViewIfNeeded
       ? 'scrollIntoViewIfNeeded'
       : taskEl.scrollIntoView
-      ? 'scrollIntoView'
-      : '';
+        ? 'scrollIntoView'
+        : '';
     if (!funcName) {
       return;
     }
     taskEl[funcName]({ behavior: 'smooth', block: 'top' });
   }
 
-  isSelectedTask(task) {
-    const sameProject = this.taskData.selectedTask?.project().project_id === task.project().project_id;
-    const sameTaskDef = this.taskData.selectedTask?.task_definition_id === task.task_definition_id;
+  isSelectedTask(task: Task) {
+    const sameProject = this.taskData.selectedTask?.project.id === task.project.id;
+    const sameTaskDef = this.taskData.selectedTask?.definition.id === task.definition.id;
     return sameProject && sameTaskDef;
   }
 
@@ -360,26 +391,7 @@ export class StaffTaskListComponent implements OnInit, OnChanges {
     }
   }
 
-  // toggleTutorialSort() {
-  // }
-
-  togglePin(task) {
-    if (task.pinned) {
-      task.unpin(
-        task.id,
-        (sucess: any) => {},
-        (error: any) => {
-          this.alertService.add('danger', error.data.error, 6000);
-        }
-      );
-    } else {
-      task.pin(
-        task.id,
-        (sucess: any) => {},
-        (error: any) => {
-          this.alertService.add('danger', error.data.error, 6000);
-        }
-      );
-    }
+  togglePin(task: Task) {
+    task.pinned ? task.unpin() : task.pin();
   }
 }

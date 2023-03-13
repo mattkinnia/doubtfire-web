@@ -4,35 +4,36 @@ import { take } from 'rxjs/operators';
 import { NgModule, Injector, DoBootstrap } from '@angular/core';
 import { BrowserModule, DomSanitizer, Title } from '@angular/platform-browser';
 import { UpgradeModule } from '@angular/upgrade/static';
-import { setAppInjector } from './app-injector';
+import { AppInjector, setAppInjector } from './app-injector';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ClipboardModule } from '@angular/cdk/clipboard';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatLegacySelectModule as MatSelectModule } from '@angular/material/legacy-select';
+import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/legacy-button';
+import { MatLegacyMenuModule as MatMenuModule } from '@angular/material/legacy-menu';
+import { MatLegacyCheckboxModule as MatCheckboxModule } from '@angular/material/legacy-checkbox';
+import { MatLegacyDialogModule as MatDialogModule } from '@angular/material/legacy-dialog';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatLegacyFormFieldModule as MatFormFieldModule } from '@angular/material/legacy-form-field';
+import { MatLegacyAutocompleteModule as MatAutocompleteModule } from '@angular/material/legacy-autocomplete';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
+import { MatLegacyInputModule as MatInputModule } from '@angular/material/legacy-input';
 import { MatBadgeModule } from '@angular/material/badge';
-import { MatListModule } from '@angular/material/list';
-import { MatCardModule } from '@angular/material/card';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSliderModule } from '@angular/material/slider';
+import { MatLegacyListModule as MatListModule } from '@angular/material/legacy-list';
+import { MatLegacyCardModule as MatCardModule } from '@angular/material/legacy-card';
+import { MatLegacyProgressBarModule as MatProgressBarModule } from '@angular/material/legacy-progress-bar';
+import { MatLegacySliderModule as MatSliderModule } from '@angular/material/legacy-slider';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatStepperModule } from '@angular/material/stepper';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatChipsModule } from '@angular/material/chips';
+import { MatLegacySnackBarModule as MatSnackBarModule } from '@angular/material/legacy-snack-bar';
+import { MatLegacyPaginatorModule as MatPaginatorModule } from '@angular/material/legacy-paginator';
+import { MatLegacyTooltipModule as MatTooltipModule } from '@angular/material/legacy-tooltip';
+import { MatLegacySlideToggleModule as MatSlideToggleModule } from '@angular/material/legacy-slide-toggle';
+import { MatLegacyChipsModule as MatChipsModule } from '@angular/material/legacy-chips';
 import { MatGridListModule } from '@angular/material/grid-list';
-
+import { PdfViewerModule } from 'ng2-pdf-viewer';
 import { UIRouterUpgradeModule } from '@uirouter/angular-hybrid';
 
 import { setTheme } from 'ngx-bootstrap/utils';
@@ -45,36 +46,27 @@ import {
 import { DoubtfireConstants } from 'src/app/config/constants/doubtfire-constants';
 
 import { DoubtfireAngularJSModule } from 'src/app/doubtfire-angularjs.module';
-import { TokenInterceptor } from './common/services/http-authentication.interceptor';
+import { HttpAuthenticationInterceptor } from './common/services/http-authentication.interceptor';
 import {
-  unitProvider,
-  currentUserProvider,
-  authProvider,
-  taskServiceProvider,
+  visualisationsProvider,
   analyticsServiceProvider,
-  unitServiceProvider,
   dateServiceProvider,
-  taskProvider,
-  projectServiceProvider,
   alertServiceProvider,
   CsvUploadModalProvider,
   UnitStudentEnrolmentModalProvider,
   CsvResultModalProvider,
   AudioRecorderProvider,
   AudioRecorderServiceProvider,
-  userProvider,
-  currentUser,
-  TaskCommentProvider,
   gradeServiceProvider,
   commentsModalProvider,
-  taskDefinitionProvider,
-  groupServiceProvider,
   plagiarismReportModalProvider,
-  userSettingsModalProvider,
   rootScopeProvider,
   aboutDoubtfireModalProvider,
   calendarModalProvider,
-  userNotificationSettingsModalProvider,
+  uploadSubmissionModal,
+  gradeTaskModalProvider,
+  uploadSubmissionModalProvider,
+  ConfirmationModalProvider,
 } from './ajs-upgraded-providers';
 import {
   TaskCommentComposerComponent,
@@ -84,7 +76,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { AudioCommentRecorderComponent } from './common/audio-recorder/audio/audio-comment-recorder/audio-comment-recorder';
 import { DiscussionPromptComposerComponent } from './tasks/task-comment-composer/discussion-prompt-composer/discussion-prompt-composer.component';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatLegacyProgressSpinnerModule as MatProgressSpinnerModule } from '@angular/material/legacy-progress-spinner';
 import {
   IntelligentDiscussionPlayerComponent,
   IntelligentDiscussionDialog,
@@ -96,12 +88,12 @@ import { ExtensionCommentComponent } from './tasks/task-comments-viewer/extensio
 import { CampusListComponent } from './admin/institution-settings/campuses/campus-list/campus-list.component';
 import { ExtensionModalComponent } from './common/modals/extension-modal/extension-modal.component';
 import { CalendarModalComponent } from './common/modals/calendar-modal/calendar-modal.component';
-import { MatRadioModule } from '@angular/material/radio';
+import { MatLegacyRadioModule as MatRadioModule } from '@angular/material/legacy-radio';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatOptionModule } from '@angular/material/core';
+import { MatLegacyOptionModule as MatOptionModule } from '@angular/material/legacy-core';
 import { doubtfireStates } from './doubtfire.states';
-import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
+import { MatLegacyTableModule as MatTableModule } from '@angular/material/legacy-table';
+import { MatLegacyTabsModule as MatTabsModule } from '@angular/material/legacy-tabs';
 import { MatSortModule } from '@angular/material/sort';
 import { ActivityTypeListComponent } from './admin/institution-settings/activity-type-list/activity-type-list.component';
 import { UnitStudentsEditorComponent } from './units/states/edit/directives/unit-students-editor/unit-students-editor.component';
@@ -125,7 +117,7 @@ import { UserIconComponent } from './common/user-icon/user-icon.component';
 import { AudioPlayerComponent } from './common/audio-player/audio-player.component';
 import { HumanizedDatePipe } from './common/pipes/humanized-date.pipe';
 import { DragDropDirective } from './common/directives/drag-drop.directive';
-import { PdfViewerComponent } from './common/pdf-viewer/pdf-viewer.component';
+import { fPdfViewerComponent } from './common/pdf-viewer/pdf-viewer.component';
 import { SafePipe } from './common/pipes/safe.pipe';
 import { PdfViewerPanelComponent } from './common/pdf-viewer-panel/pdf-viewer-panel.component';
 import { StaffTaskListComponent } from './units/states/tasks/inbox/directives/staff-task-list/staff-task-list.component';
@@ -140,13 +132,22 @@ import { CheckForUpdateService } from './sessions/service-worker-updater/check-f
 import {
   ActivityTypeService,
   CampusService,
+  AuthenticationService,
+  GroupSetService,
   OverseerImageService,
   OverseerAssessmentService,
   TaskCommentService,
+  TeachingPeriodService,
+  TeachingPeriodBreakService,
   TutorialService,
   TutorialStreamService,
+  UnitService,
+  TaskService,
+  ProjectService,
+  UnitRoleService,
   UserService,
   WebcalService,
+  LearningOutcomeService,
 } from './api/models/doubtfire-model';
 import { FileDownloaderService } from './common/file-downloader/file-downloader';
 import { PdfImageCommentComponent } from './tasks/task-comments-viewer/pdf-image-comment/pdf-image-comment.component';
@@ -163,6 +164,26 @@ import { HeaderComponent } from './common/header/header.component';
 import { UnitDropdownComponent } from './common/header/unit-dropdown/unit-dropdown.component';
 import { TaskDropdownComponent } from './common/header/task-dropdown/task-dropdown.component';
 import { SplashScreenComponent } from './home/splash-screen/splash-screen.component';
+import { HttpErrorInterceptor } from './common/services/http-error.interceptor';
+import { TaskDefinitionService } from './api/services/task-definition.service';
+import { TaskOutcomeAlignmentService } from './api/services/task-outcome-alignment.service';
+import { GroupService } from './api/services/group.service';
+import { ObjectSelectComponent } from './common/obect-select/object-select.component';
+import { WelcomeComponent } from './welcome/welcome.component';
+import { HeroSidebarComponent } from './common/hero-sidebar/hero-sidebar.component';
+import { SignInComponent } from './sessions/states/sign-in/sign-in.component';
+import { EditProfileFormComponent } from './common/edit-profile-form/edit-profile-form.component';
+import { TransitionHooksService } from './sessions/transition-hooks.service';
+import { EditProfileComponent } from './account/edit-profile/edit-profile.component';
+import { UserBadgeComponent } from './common/user-badge/user-badge.component';
+import { TaskStatusCardComponent } from './projects/states/dashboard/directives/task-dashboard/directives/task-status-card/task-status-card.component';
+import { TaskDueCardComponent } from './projects/states/dashboard/directives/task-dashboard/directives/task-due-card/task-due-card.component';
+import { FooterComponent } from './common/footer/footer.component';
+import { TaskAssessmentCardComponent } from './projects/states/dashboard/directives/task-dashboard/directives/task-assessment-card/task-assessment-card.component';
+import { TaskSubmissionCardComponent } from './projects/states/dashboard/directives/task-dashboard/directives/task-submission-card/task-submission-card.component';
+import { TaskDashboardComponent } from './projects/states/dashboard/directives/task-dashboard/task-dashboard.component';
+import { InboxComponent } from './units/states/tasks/inbox/inbox.component';
+import { ProjectProgressBarComponent } from './common/project-progress-bar/project-progress-bar.component';
 
 @NgModule({
   // Components we declare
@@ -202,7 +223,7 @@ import { SplashScreenComponent } from './home/splash-screen/splash-screen.compon
     HumanizedDatePipe,
     IsActiveUnitRole,
     DragDropDirective,
-    PdfViewerComponent,
+    fPdfViewerComponent,
     SafePipe,
     PdfViewerPanelComponent,
     StaffTaskListComponent,
@@ -220,6 +241,21 @@ import { SplashScreenComponent } from './home/splash-screen/splash-screen.compon
     UnitDropdownComponent,
     TaskDropdownComponent,
     SplashScreenComponent,
+    ObjectSelectComponent,
+    WelcomeComponent,
+    HeroSidebarComponent,
+    SignInComponent,
+    EditProfileFormComponent,
+    EditProfileComponent,
+    UserBadgeComponent,
+    TaskStatusCardComponent,
+    TaskDueCardComponent,
+    FooterComponent,
+    TaskAssessmentCardComponent,
+    TaskSubmissionCardComponent,
+    TaskDashboardComponent,
+    InboxComponent,
+    ProjectProgressBarComponent,
   ],
   // Module Imports
   imports: [
@@ -229,6 +265,7 @@ import { SplashScreenComponent } from './home/splash-screen/splash-screen.compon
     FormsModule,
     HttpClientModule,
     ClipboardModule,
+    DragDropModule,
     ScrollingModule,
     MatToolbarModule,
     MatFormFieldModule,
@@ -269,6 +306,7 @@ import { SplashScreenComponent } from './home/splash-screen/splash-screen.compon
     ReactiveFormsModule,
     PickerModule,
     EmojiModule,
+    PdfViewerModule,
     UIRouterUpgradeModule.forRoot({ states: doubtfireStates }),
     ServiceWorkerModule.register('ngsw-worker.js', {
       enabled: environment.production,
@@ -278,9 +316,20 @@ import { SplashScreenComponent } from './home/splash-screen/splash-screen.compon
   // Services we provide
   providers: [
     CampusService,
+    AuthenticationService,
+    GroupSetService,
+    GroupService,
+    UnitService,
+    ProjectService,
+    UnitRoleService,
+    LearningOutcomeService,
+    TaskDefinitionService,
+    TeachingPeriodService,
+    TeachingPeriodBreakService,
     TutorialService,
     TutorialStreamService,
     UserService,
+    TaskService,
     WebcalService,
     ActivityTypeService,
     OverseerImageService,
@@ -288,40 +337,38 @@ import { SplashScreenComponent } from './home/splash-screen/splash-screen.compon
     EmojiService,
     FileDownloaderService,
     CheckForUpdateService,
-    userProvider,
-    groupServiceProvider,
-    unitProvider,
+    TaskOutcomeAlignmentService,
+    visualisationsProvider,
     commentsModalProvider,
-    taskDefinitionProvider,
-    userSettingsModalProvider,
     rootScopeProvider,
-    userNotificationSettingsModalProvider,
     calendarModalProvider,
     aboutDoubtfireModalProvider,
-    authProvider,
-    currentUserProvider,
-    taskServiceProvider,
     gradeServiceProvider,
+    uploadSubmissionModalProvider,
+    gradeTaskModalProvider,
     analyticsServiceProvider,
-    unitServiceProvider,
     dateServiceProvider,
-    taskProvider,
-    projectServiceProvider,
     alertServiceProvider,
     CsvUploadModalProvider,
     CsvResultModalProvider,
     UnitStudentEnrolmentModalProvider,
     TaskCommentService,
-    TaskCommentProvider,
     AudioRecorderProvider,
     AudioRecorderServiceProvider,
     plagiarismReportModalProvider,
     UnitStudentsEditorComponent,
+    ConfirmationModalProvider,
     {
       provide: HTTP_INTERCEPTORS,
-      useClass: TokenInterceptor,
+      useClass: HttpAuthenticationInterceptor,
       multi: true,
-      deps: [currentUser],
+      deps: [UserService],
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: HttpErrorInterceptor,
+      multi: true,
+      deps: [AuthenticationService],
     },
     AboutDoubtfireModal,
     AboutDoubtfireModalService,
@@ -357,9 +404,10 @@ export class DoubtfireAngularModule implements DoBootstrap {
     );
   }
 
-  ngDoBootstrap() {
+  ngDoBootstrap(): void {
     this.upgrade.bootstrap(document.body, [DoubtfireAngularJSModule.name], {
       strictDi: false,
     });
+    AppInjector.get(TransitionHooksService);
   }
 }

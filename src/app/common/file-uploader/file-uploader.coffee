@@ -1,4 +1,4 @@
-angular.module('doubtfire.common.file-uploader', [])
+angular.module('doubtfire.common.file-uploader', ["ngFileUpload"])
 
 .directive 'fileUploader', ->
   restrict: 'E'
@@ -51,7 +51,7 @@ angular.module('doubtfire.common.file-uploader', [])
     onClickFailureCancel: '=?'
     # Whether we should reset after upload
     resetAfterUpload: '=?'
-  controller: ($scope, $timeout, currentUser) ->
+  controller: ($scope, $timeout, newUserService) ->
     #
     # Accepted upload types with associated data
     #
@@ -69,10 +69,10 @@ angular.module('doubtfire.common.file-uploader', [])
         icon:       'fa-file-excel-o'
         name:       'CSV'
       code:
-        extensions: ['pas', 'cpp', 'c', 'cs', 'h', 'java', 'py', 'js', 'html', 'coffee', 'rb', 'css',
+        extensions: ['pas', 'cpp', 'c', 'cs', 'h', 'hpp', 'java', 'py', 'js', 'html', 'coffee', 'rb', 'css',
                     'scss', 'yaml', 'yml', 'xml', 'json', 'ts', 'r', 'rmd', 'rnw', 'rhtml', 'rpres', 'tex',
                     'vb', 'sql', 'txt', 'md', 'jack', 'hack', 'asm', 'hdl', 'tst', 'out', 'cmp', 'vm', 'sh', 'bat',
-                    'dat']
+                    'dat', 'ipynb']
         icon:       'fa-file-code-o'
         name:       'code'
       image:
@@ -296,7 +296,7 @@ angular.module('doubtfire.common.file-uploader', [])
       xhr.open $scope.method, $scope.url, true
 
       # Add auth details
-      xhr.setRequestHeader('Auth-Token', currentUser.authenticationToken)
-      xhr.setRequestHeader('Username', currentUser.profile.username)
+      xhr.setRequestHeader('Auth-Token', newUserService.currentUser.authenticationToken)
+      xhr.setRequestHeader('Username', newUserService.currentUser.username)
 
       xhr.send form

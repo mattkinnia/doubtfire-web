@@ -1,7 +1,6 @@
 angular.module('doubtfire.units.states.tasks', [
   'doubtfire.units.states.tasks.inbox'
   'doubtfire.units.states.tasks.definition'
-  'doubtfire.units.states.tasks.offline'
   'doubtfire.units.states.tasks.viewer'
 ])
 
@@ -21,7 +20,7 @@ angular.module('doubtfire.units.states.tasks', [
    }
 )
 
-.controller('UnitsTasksStateCtrl', ($scope, $state, taskService, listenerService, $transition$) ->
+.controller('UnitsTasksStateCtrl', ($scope, $state, newTaskService, listenerService, $transition$) ->
   # Cleanup
   listeners = listenerService.listenTo($scope)
 
@@ -49,7 +48,7 @@ angular.module('doubtfire.units.states.tasks', [
   setTaskKeyFromUrlParams = (taskKeyString) ->
     # Propagate selected task change downward to search for actual task
     # inside the task inbox list
-    $scope.taskData.taskKey = taskService.taskKeyFromString(taskKeyString)
+    $scope.taskData.taskKey = newTaskService.taskKeyFromString(taskKeyString)
 
   # Child states will use taskKey to notify what task has been
   # selected by the child on first load.
