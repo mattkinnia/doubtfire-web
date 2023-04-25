@@ -21,6 +21,7 @@ export const calendarModal = new InjectionToken('CalendarModal');
 export const aboutDoubtfireModal = new InjectionToken('AboutDoubtfireModal');
 export const plagiarismReportModal = new InjectionToken('PlagiarismReportModal');
 export const createBreakModal = new InjectionToken('CreateBreakModal');
+export const rolloverTeachingPeriodModal = new InjectionToken('RolloverTeachingPeriodModal');
 
 // Define a provider for the above injection token...
 // It will get the service from AngularJS via the factory
@@ -135,5 +136,11 @@ export const UnitStudentEnrolmentModalProvider = {
 export const CreateBreakModalProvider = {
   provide: createBreakModal,
   useFactory: (i: any) => i.get('CreateBreakModal'),
+  deps: ['$injector'],
+};
+
+export const RolloverTeachingPeriodModalProvider = {
+  provide: rolloverTeachingPeriodModal,
+  useFactory: (i: any) => i.get('RolloverTeachingPeriodModal'),
   deps: ['$injector'],
 };

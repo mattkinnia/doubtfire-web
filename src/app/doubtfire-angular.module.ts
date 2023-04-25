@@ -67,6 +67,7 @@ import {
   uploadSubmissionModalProvider,
   ConfirmationModalProvider,
   CreateBreakModalProvider,
+  RolloverTeachingPeriodModalProvider,
 } from './ajs-upgraded-providers';
 import {
   TaskCommentComposerComponent,
@@ -177,6 +178,7 @@ import { TransitionHooksService } from './sessions/transition-hooks.service';
 import { EditProfileComponent } from './account/edit-profile/edit-profile.component';
 import { UserBadgeComponent } from './common/user-badge/user-badge.component';
 import { TeachingPeriodBreaksComponent } from './admin/states/teaching-periods/teaching-period-edit/directives/teaching-period-breaks/teaching-period-breaks.component';
+import { TeachingPeriodUnitsComponent } from './admin/states/teaching-periods/teaching-period-edit/directives/teaching-period-units/teaching-period-units.component';
 
 @NgModule({
   // Components we declare
@@ -242,6 +244,7 @@ import { TeachingPeriodBreaksComponent } from './admin/states/teaching-periods/t
     EditProfileComponent,
     UserBadgeComponent,
     TeachingPeriodBreaksComponent,
+    TeachingPeriodUnitsComponent,
   ],
   // Module Imports
   imports: [
@@ -362,6 +365,7 @@ import { TeachingPeriodBreaksComponent } from './admin/states/teaching-periods/t
     TasksForInboxSearchPipe,
     IsActiveUnitRole,
     CreateBreakModalProvider,
+    RolloverTeachingPeriodModalProvider,
   ],
 })
 // There is no longer any requirement for an EntryComponents section
