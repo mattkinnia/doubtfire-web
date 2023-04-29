@@ -179,6 +179,7 @@ import { EditProfileComponent } from './account/edit-profile/edit-profile.compon
 import { UserBadgeComponent } from './common/user-badge/user-badge.component';
 import { TeachingPeriodBreaksComponent } from './admin/states/teaching-periods/teaching-period-edit/directives/teaching-period-breaks/teaching-period-breaks.component';
 import { TeachingPeriodUnitsComponent } from './admin/states/teaching-periods/teaching-period-edit/directives/teaching-period-units/teaching-period-units.component';
+import { TeachingPeriodDetailsEditorComponent } from './admin/states/teaching-periods/teaching-period-edit/directives/teaching-period-details-editor/teaching-period-details-editor.component';
 
 @NgModule({
   // Components we declare
@@ -245,6 +246,7 @@ import { TeachingPeriodUnitsComponent } from './admin/states/teaching-periods/te
     UserBadgeComponent,
     TeachingPeriodBreaksComponent,
     TeachingPeriodUnitsComponent,
+    TeachingPeriodDetailsEditorComponent,
   ],
   // Module Imports
   imports: [
