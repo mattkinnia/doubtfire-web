@@ -1,4 +1,4 @@
-angular.module('doubtfire.admin.states.teachingperiods.edit', ['doubtfire.teaching-periods.states.edit.directives'])
+angular.module('doubtfire.admin.states.teachingperiods.edit', [])
 
 .config(($stateProvider) ->
   teachingPeriodsAdminViewStateData =

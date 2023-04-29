@@ -1,0 +1,1 @@
+angular.module('doubtfire.teaching-periods.states.edit.directives', [])
